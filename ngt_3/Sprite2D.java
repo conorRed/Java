@@ -14,12 +14,14 @@ public class Sprite2D {
 	}
 	
 	public void paint(Graphics g){
-		g.drawImage(img, (int)x, (int)y,50,32,null);
+		g.drawImage(img, (int)x, (int)y,null);
+		
 	}		
 	public void setPosition(double xx,double yy){
 		this.x = xx;
 		this.y = yy;
 		}
+
 	public void setXSpeed(int sp){
 		this.xSpeed  = sp;
 	}

@@ -4,17 +4,21 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
 public class InvadersApplication extends JFrame implements Runnable,KeyListener{
 	private Image alien,spaceShip,alien2,bulletImage;
+	private ArrayList<PlayerBullet> removebullets = new ArrayList<PlayerBullet>();
+	private ArrayList<PlayerBullet> bullets;
+	private ArrayList<Alien> alienlist = new ArrayList<Alien>();
 	private BufferStrategy strategy;
-	private PlayerBullet bullet;
 	private static boolean initialise = false;
 	private Thread t;
-	private static final int NUM_ALIENS_rows = 3,NUM_ALIENS_columns =3;
+	private static final int NUM_ALIENS_rows = 4,NUM_ALIENS_columns =5;
 	private static final Dimension WINDOW_SIZE = new Dimension(600,700);
 	private static Dimension screensize;
 	private static String directory;
@@ -40,23 +44,32 @@ public InvadersApplication(){
 		alien2 = new ImageIcon(directory + "\\alien2.png").getImage();
 		spaceShip = new ImageIcon(directory + "\\player_ship.png").getImage();
 		bulletImage = new ImageIcon(directory + "\\bullet.png").getImage();
-		for (int j = 0; j < NUM_ALIENS_rows; j++) {
+		
+		
+		for (int j = 0; j < NUM_ALIENS_rows; j++) { //Used this to set up aliens in matrix
 				for (int i = 0; i < NUM_ALIENS_columns; i++) {
 					aliens[j][i] = new Alien(this,alien,alien2);
 					aliens[j][i].setPosition(i*60,(j)*50);
 					aliens[j][i].setXSpeed(2);			
 				} 
 			}
+		/**********************************************************************************************/
+		for (int j = 0; j < NUM_ALIENS_rows; j++) {	//move aliens into arraylist so they can be iterated and manipulated easier
+			for (int i = 0; i < NUM_ALIENS_columns; i++) {
+				alienlist.add(aliens[j][i]);		
+			} 
+		}
 		
+	/**************************************************************************************************/
 		ship = new Spaceship(spaceShip);
 		ship.setPosition(wx/2-25, wy-70);
+		bullets = new ArrayList<PlayerBullet>();
 		Sprite2D.setWindowWidth(wx);
 		addKeyListener(this);
 		
 		//defining main thread and starting it
 		t = new Thread(this);
 		t.start();
-		
 		//creating a buffer strategy and signaling completion of constructor
 		createBufferStrategy(2);
 		strategy = getBufferStrategy();
@@ -67,7 +80,6 @@ public InvadersApplication(){
 //Main method and paint method
 	public static void main(String[] args) {
 		directory = System.getProperty("user.dir");
-		//System.out.println(directory);
 		new InvadersApplication();
 	}
 	public void paint(Graphics g){
@@ -75,10 +87,11 @@ public InvadersApplication(){
 		g = strategy.getDrawGraphics();
 		g.setColor(Color.BLACK);
 		g.fillRect(0,0,wx,wy);
-		for (int j = 0; j < NUM_ALIENS_rows; j++) {
-			for (int i = 0; i < NUM_ALIENS_columns; i++) {
-				aliens[j][i].paint(g);
-			} 
+		for(Alien a: alienlist){
+			a.paint(g);
+		}
+		for(PlayerBullet b: bullets){
+				b.paint(g);
 		}
 		ship.paint(g);
 		g.dispose();
@@ -92,14 +105,27 @@ public InvadersApplication(){
 		while(true){
 			try {
 				Thread.sleep(50);
-
-				for (int j = 0; j < NUM_ALIENS_rows; j++) {
-					for (int i = 0; i < NUM_ALIENS_columns; i++) {
-						aliens[j][i].move();
-					} 
+				for (Alien a: alienlist) {	
+						a.move();				
 				}
+				Iterator<PlayerBullet> iter = bullets.iterator();
+				PlayerBullet b;
+				while(iter.hasNext()){
+					
+						b = iter.next();
+						b.move();
+				
+						
+						if (b.collide(alienlist)!= null) {
+							removeSprite(b.collide(alienlist));
+							iter.remove();
+						}
+						
+					
+						
+				}
+				removebullets.clear();
 				ship.move();
-				shootBullet();
 				this.repaint();
 		
 			} catch (InterruptedException e) {
@@ -112,21 +138,29 @@ public InvadersApplication(){
 /**********************************************************************************************/
 	//methods to change external classes: move alien sprites and shoot bullets
 	
-public void update(){
-	for (int j = 0; j < NUM_ALIENS_rows; j++) {
-		for (int i = 0; i < NUM_ALIENS_columns; i++) {
-			aliens[j][i].update();
-		} 
+	public void update(){
+		for(Alien a: alienlist){
+			a.update();
+		}
+		
 	}
-}
 
 public void shootBullet(){
-			bullet = new PlayerBullet(bulletImage,ship.getX()+ship.getWidth(),ship.getY()+ship.getHeight());
-			bullet.setXSpeed(10);
-			bullet.move();
+	PlayerBullet bullet;
+	bullet = new PlayerBullet(this,bulletImage);
+	bullet.setPosition(ship.getX()+(ship.getWidth()*0.5 -3), ship.getY()+(ship.getHeight()/2));//put minus 5 in there because the image seemed not to
+	bullet.setXSpeed(10);																//be symmetrical 
+	bullets.add(bullet);
 	
-
+}
+public void removeSprite(Sprite2D o){
+	if(o instanceof PlayerBullet){
+		removebullets.add((PlayerBullet)o);
+	}
+	if(o instanceof Alien)
+		alienlist.remove(o);
 	
+}
 /***********************************************************************************************/
 //Key Listeners and intractability  
 
@@ -139,7 +173,7 @@ public void shootBullet(){
 			ship.setXSpeed(-10);	
 	}
 		if(e.getKeyCode() == KeyEvent.VK_SPACE){
-			bulletActivate = true;
+			shootBullet();
 		}
 	}
 
