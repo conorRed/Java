@@ -31,7 +31,6 @@ public class Alien extends Sprite2D {
 		}
 		x+=xSpeed;
 	}	
-	
 	public double getWidth(){return 50;}//just had to adjust this for my image
 	public double getHeight(){return 32;}
 	public void update(){
