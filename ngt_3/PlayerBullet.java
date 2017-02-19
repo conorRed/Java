@@ -35,7 +35,7 @@ public boolean alive = true;
 		bulletBottom = (int) (this.getY()+this.getHeight());
 		for(Alien a : s){
 				if(bulletBottom >= a.getY() && bulletTop <= (a.getY()+a.getHeight()) && bulletLeft< a.getX()+a.getWidth() && bulletRight>a.getX())
-					return a;					
+					return a;
 			} 
 		return null;
 	}

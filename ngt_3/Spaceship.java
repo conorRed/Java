@@ -27,7 +27,7 @@ public class Spaceship extends Sprite2D{
 		shipBottom = (int) (this.getY()+this.getHeight());
 		for(Alien a : s){
 				if(shipBottom >= a.getY() && shipTop <= (a.getY()+a.getHeight()) && shipLeft< a.getX()+a.getWidth() && shipRight>a.getX())
-					return true;					
+					return true;	
 			} 
 		return false;
 	}

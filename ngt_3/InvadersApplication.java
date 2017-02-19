@@ -12,12 +12,14 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
 public class InvadersApplication extends JFrame implements Runnable,KeyListener{
-	private Image alien1,spaceShip,alien2,bulletImage;
+	private Image alien1,spaceShip,alien2,bulletImage,logo;
+	private static int score = 0,waveNum= 0;
+	private final static int WAVE_MAX = 10;
 	private ArrayList<PlayerBullet> removebullets = new ArrayList<PlayerBullet>();
 	private ArrayList<PlayerBullet> bullets;
 	private ArrayList<Alien> alienlist = new ArrayList<Alien>();
 	private BufferStrategy strategy;
-	private static boolean setupInitialise = false,gameOn = true,gameOver=false,gameStart=false;;
+	private static boolean setupInitialise = false,gameWin = false,gameOver=false,wait_press = true;
 	private long fireInterval=500,lastFire = 0;
 	private static final int NUM_ALIENS_rows = 4,NUM_ALIENS_columns =5;
 	private static final Dimension WINDOW_SIZE = new Dimension(600,700);
@@ -44,15 +46,14 @@ public InvadersApplication(){
 		
 		
 	/**************************************************************************************************/
-		initSprites();
+		initSprites(2);
 		addKeyListener(this);
 	
 		//creating a buffer strategy and signaling completion of constructor
 		createBufferStrategy(2);
 		strategy = getBufferStrategy();
-		gameStart=true;
-		gameOn=false;
 		setupInitialise = true; //make sure everything is initialize before we try and paint
+		gameLoop();
 	}
 
 /***********************************************************************************************/
@@ -60,11 +61,9 @@ public InvadersApplication(){
 	public static void main(String[] args) {
 		directory = System.getProperty("user.dir");
 		InvadersApplication game = new InvadersApplication();
-		game.gameLoop();
 	}
 	public void paint(Graphics g){
 		if(setupInitialise){
-			
 					g = strategy.getDrawGraphics();
 					g.setColor(Color.BLACK);
 					g.fillRect(0,0,wx,wy);
@@ -75,50 +74,80 @@ public InvadersApplication(){
 							b.paint(g);
 					}
 					ship.paint(g);
+					score();
 					g.dispose();
 					strategy.show();
-					}
+		
+		}
+	
+		
 	}
 /***********************************************************************************************/
 	public void gameLoop(){
+		//startMenu();
 		Thread t;
 		t = new Thread(this);
-		if(gameStart)
-			gameMenu();
-		if(gameOn)
-			t.start();
-		if(gameOver)
-			gameMenu();
+		t.start();
+	
+			
 	}
-	public void gameMenu(){
-		while(gameOver){
-		Graphics g = this.getGraphics();
-		g.setFont(new Font("TimesRoman", Font.PLAIN, 70)); 
-		g.setColor(Color.WHITE);
-		g.drawString("Game Over",100, wy/2);
-		g.setFont(new Font("TimesRoman", Font.PLAIN, 40)); 
-		g.drawString("Press Enter to restart...",100, wy/2+50);
-		try {
-			if(System.in.read() == 13){
-			gameOn=true;
-			gameLoop();
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		}
+	public void score(){
+		Graphics g = strategy.getDrawGraphics();
+     
+        g.setColor(Color.white);
+        Font font = new Font("Courier New",Font.BOLD,30);
+        g.setFont(font);
+        g.drawString("Score: "+score,70,50); 
+       
+        strategy.show();
+	}
+	public void startMenu(){
+		logo = new ImageIcon(directory + "\\logo2.png").getImage();
+		Graphics g = strategy.getDrawGraphics();
+	        g.setColor(Color.black);
+	        g.fillRect(0, 0, wx, wy);
+	        g.drawImage(logo, wx/2 - 150 , wy/2 - 75,300,150,null);
+	        g.setColor(Color.white);
+	        Font font = new Font("Courier New",Font.BOLD,30);
+	        g.setFont(font);
+	        g.drawString("press any key to play...",100,wy-100); 
+	       
+	        strategy.show();
 		
-		while(gameStart){
-			Graphics g = this.getGraphics();
-			
-			g.fillRect(0, 0, wx, wy);
-			g.setColor(Color.WHITE);
-			g.setFont(new Font("TimesRoman", Font.PLAIN, 70)); 
-			
-			g.drawString("Start Game",100, wy/2);
+	}
+	public void gameOver(){
+		
+		if(gameOver){
+			Graphics g = strategy.getDrawGraphics();
+	        g.setColor(Color.black);
+	        g.fillRect(0, 0, wx, wy);
+	        g.setColor(Color.white);
+	        Font font = new Font("SANS_SERIF",Font.BOLD,50);
+	        g.setFont(font);
+	        g.drawString("Game Over!", 50, wy/2 +50);
+	        strategy.show();
 		}
+		if(gameWin){
+			waveNum++;
+			Graphics g = strategy.getDrawGraphics();
+			if(waveNum >WAVE_MAX){
+			 g.setColor(Color.black);
+		        g.fillRect(0, 0, wx, wy);
+		        g.setColor(Color.white);
+		        Font font = new Font("SANS_SERIF",Font.BOLD,50);
+		        g.setFont(font);
+		        g.drawString("You win! congrats", 50, 
+		 	           wy/2 +50);
+		        strategy.show();
+		        return;
+			}
+			System.out.print("Finished init");
+			gameWin=false;
+			initSprites(waveNum+5);
+			gameLoop();
 			
+			
+		}
 	}
 			
 //Run method for thread that constantly updates the game
@@ -126,41 +155,53 @@ public InvadersApplication(){
 	public void run() {
 		
 		while(true){
+			
+			if(wait_press){
+				startMenu();
+				break;
+			}
 			try {
 				
 				Thread.sleep(50);
 				
-				for (Alien a: alienlist) {	
-						a.move();				
-				}
-				
-				Iterator<PlayerBullet> iter = bullets.iterator();
-				PlayerBullet b;
-				while(iter.hasNext()){
-						
-						b = iter.next();
-						b.move();
-	
-						if (b.collide(alienlist)!= null) {
-							removeSprite(b.collide(alienlist));
-							iter.remove();
-						}
-		
-				}
-				removebullets.clear();
-				if(firePressed){
-					shootBullet();
-				}
-				if(!ship.collide(alienlist)){
-				ship.move();
-				}else{gameOn=false;gameOver=true;gameLoop();}
-				this.repaint();
-			
-				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			for (Alien a: alienlist) {	
+				a.move();				
+		}
+		Iterator<PlayerBullet> iter = bullets.iterator();
+		PlayerBullet b;
+		while(iter.hasNext()){
 			
+				b = iter.next();
+				b.move();
+
+				if (b.collide(alienlist)!= null) {
+					removeSprite(b.collide(alienlist));
+					iter.remove();
+				}
+
+		}
+	
+		if(gameOver){
+			gameOver();
+			break;
+		}
+		if(gameWin){
+			gameOver();
+			break;
+		}
+		removebullets.clear();
+		if(firePressed){
+			shootBullet();
+		}
+		if(ship.collide(alienlist)){
+			gameOver = true;
+		}
+		ship.move();
+		this.repaint();
+	
 		}
 		
 		
@@ -175,7 +216,7 @@ public InvadersApplication(){
 		
 	}
 
-void initSprites(){
+void initSprites(int waveSpeed){
 	alien1 = new ImageIcon(directory + "\\Spaceinvaders.png").getImage();
 	alien2 = new ImageIcon(directory + "\\alien2.png").getImage();
 	spaceShip = new ImageIcon(directory + "\\player_ship.png").getImage();
@@ -189,7 +230,7 @@ void initSprites(){
 				for (int i = 0; i < NUM_ALIENS_columns; i++){
 					Alien alien = new Alien(this,alien1,alien2);
 					alien.setPosition(i*60,(j)*50);
-					alien.setXSpeed(20);
+					alien.setXSpeed(waveSpeed);
 					alienlist.add(alien);		
 				} 
 			}
@@ -216,9 +257,8 @@ public void removeSprite(Sprite2D o){
 	if(o instanceof Alien){
 		alienlist.remove(o);
 		if(alienlist.size()<=0){
-			gameOn = false;
-			gameOver=true;
-			gameLoop();
+			gameWin=true;
+			System.out.println("gamewon");
 		}
 	}
 	
@@ -238,6 +278,7 @@ public void removeSprite(Sprite2D o){
 		if(e.getKeyCode() == KeyEvent.VK_SPACE){
 			firePressed  = true;
 		}
+		
 	}
 
 	@Override
@@ -245,13 +286,17 @@ public void removeSprite(Sprite2D o){
 		if(e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_LEFT){
 			ship.setXSpeed(0);
 		}
+		
 	
 			
 	}
 
 	@Override
 	public void keyTyped(KeyEvent arg0) {
-		// TODO Auto-generated method stub
+		if(wait_press){
+			wait_press = false;
+			gameLoop();
+		}
 		
 	}
 }
