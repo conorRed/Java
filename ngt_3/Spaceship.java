@@ -1,5 +1,6 @@
 package ngt_3;
 
+import java.awt.Graphics;
 import java.awt.Image;
 import java.util.ArrayList;
 
@@ -11,6 +12,10 @@ public class Spaceship extends Sprite2D{
 		super(i,null);
 		
 	}
+	public void paint(Graphics g){
+		g.drawImage(img, (int)x, (int)y,50,32,null);
+		
+	}	
 	public void move(){
 		x+=xSpeed;
 		if(x<=0){
@@ -31,4 +36,5 @@ public class Spaceship extends Sprite2D{
 			} 
 		return false;
 	}
+	
 }

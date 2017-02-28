@@ -12,7 +12,7 @@ public class Sprite2D {
 		this.img = i;
 		this.img2 = i2;
 	}
-	
+
 	public void paint(Graphics g){
 		g.drawImage(img, (int)x, (int)y,null);
 		

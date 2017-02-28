@@ -16,26 +16,33 @@ public class Alien extends Sprite2D {
 	public void paint(Graphics g){//overriding the sprite2d paint class to allow for two images
 		framesDrawn++;
 		if ( framesDrawn%30<10 ){
-		g.drawImage(img,(int)x, (int)y,50,50, null);
+		g.drawImage(img,(int)x, (int)y,50,32, null);
 		}
 		else
-		g.drawImage(alien2, (int)x, (int)y,50,50, null);
+		g.drawImage(alien2, (int)x, (int)y,50,32, null);
 	}
+	
 	public void move(){
 	
-		if((x+=xSpeed)>=wx-50 && x>0){
+		if((x>wx-50) && (x>0)){
+			//x += -xSpeed;
+			game.update();
+			
+		}
+
+		if((x< 0) && (x<10)){
+			//x+= xSpeed;
 			game.update();
 		}
-		if((x < 0) && (x<10)){
-			game.update();
-		}
-		x+=xSpeed;
+		x+= xSpeed;
+	
 	}	
 	
 	public double getWidth(){return 50;}//just had to adjust this for my image
 	public double getHeight(){return 32;}
 	public void update(){
 		xSpeed = -xSpeed;
-		y+=30;
+		x+= xSpeed;
+		y+=20;
 	}	
 }
